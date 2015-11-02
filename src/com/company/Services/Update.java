@@ -1,9 +1,15 @@
 package com.company.Services;
 
+import org.json.JSONObject;
+
 /**
  * Created by Lua_b on 01.11.2015.
  */
 public class Update {
+    public Update(Integer update_id) {
+        this.update_id = update_id;
+    }
+
     public Integer getUpdate_id() {
         return update_id;
     }
@@ -26,7 +32,9 @@ public class Update {
         update_id =id;
         message = mess;
     }
-    public static Update getUpdate(){
-
+    public static Update getUpdate(JSONObject update){
+        Integer id = update.getInt("update_id");
+        Message message = Message.getMessage(update.getJSONObject("message"));
+        return new Update(id,message);
     }
 }
