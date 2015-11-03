@@ -6,13 +6,15 @@ import java.net.URLEncoder;
 /**
  * Created by Lua_b on 02.11.2015.
  */
-class QueryString {
+public class QueryString {
 
     private String query = "";
 
     public QueryString(String name, String value) {
         encode(name, value);
     }
+
+    public QueryString(){}
 
     public void add(String name, String value) {
         query += "&";

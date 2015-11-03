@@ -34,9 +34,9 @@ public class User {
         String username = from.getString("username");
         return new User(id,username);
     }
-    public static User getUserForward_From(JSONObject forward_from){
-        Integer id = forward_from.getInt("id");
-        String username = forward_from.getString("username");
+    public static User getUserForwardFrom(JSONObject forwardFrom){
+        Integer id = forwardFrom.getInt("id");
+        String username = forwardFrom.getString("username");
         return new User(id,username);
     }
 }

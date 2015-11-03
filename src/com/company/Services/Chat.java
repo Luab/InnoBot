@@ -73,7 +73,7 @@ public class Chat {
     public static Chat getChat(JSONObject chat){
         Integer id = chat.getInt("id");
         String type = chat.getString("type");
-        if (type !="private") {
+        if (!type.equals("private")) {
             String title = chat.getString("title");
             return new Chat(title,type,id);
         }

@@ -28,7 +28,7 @@ public class Message {
         this.from = from;
     }
 
-    public Integer getMessage_id() {
+    public Integer getMessageId() {
         return message_id;
     }
 
