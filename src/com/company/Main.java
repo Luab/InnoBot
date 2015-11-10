@@ -1,9 +1,7 @@
 package com.company;
 
-import com.company.Services.Message;
-import com.company.Services.QueryString;
-import com.company.Services.Rule;
-import com.company.Services.Update;
+import com.company.Services.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -25,7 +23,7 @@ public class Main {
     }
 
     static URL requestUpdates(Integer offset) throws MalformedURLException {
-        String s = "https://api.telegram.org/bot104981927:AAE2q-Wsvj2aT2jmMu-ta97RdazhQQ4w0AM/getUpdates";
+        String s = "https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/getUpdates";
         if (offset != null) {
             s += "?offset=" + offset;
         }
@@ -38,7 +36,7 @@ public class Main {
      * @param chatId
      */
     static void sendMessage(String text, Integer replyTo, int chatId) throws IOException {
-        String s = "https://api.telegram.org/bot104981927:AAE2q-Wsvj2aT2jmMu-ta97RdazhQQ4w0AM/sendMessage?";
+        String s = "https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendMessage?";
         QueryString q = new QueryString();
         // chat_id=47289384&text=Test&reply_to_message_id=52
         q.add("chat_id", String.valueOf(chatId));
@@ -48,6 +46,7 @@ public class Main {
         }
         URL url = new URL(s + q.getQuery());
         url.openStream();
+        System.err.println(url);
     }
 
 
@@ -65,8 +64,7 @@ public class Main {
             public boolean check(String txt, Message msg) throws IOException {
                 for (String w : dict) {
                     if (txt.contains(w)) {
-                        sendMessage(makeText(msg),
-                                msg.getMessageId(), msg.getChat().getId());
+                        sendMessage(makeText(msg), msg.getMessageId(), msg.getChat().getId());
                         return true;
                     }
                 }
@@ -74,11 +72,7 @@ public class Main {
             }
 
             String makeText(Message msg) {
-                String[] q = new String[]{"@" + msg.getFrom().getUsername() + ", пройдите в 319",
-                "Друзья мои, нам необходимо со всеми вами пообщаться, похоже назрела такая необходимость. О времени встречи будет сообщено позднее",
-                        "@" + msg.getFrom().getUsername()
-
-                };
+                String[] q = new String[]{"@" + msg.getFrom().getUsername() + ", пройдите в 319"};
                 Random random = new Random();
                 return q[random.nextInt(q.length)];
 
@@ -93,21 +87,33 @@ public class Main {
             @Override
             public boolean check(String txt, Message msg) throws IOException {
                 if (txt.contains("айфель") || txt.contains("афель")) {
-                    sendMessage("у меня в Иннаполисе за АФЕЛЬ убивали нахрен",
-                            msg.getMessageId(), msg.getChat().getId());
+                    sendMessage("у меня в Иннаполисе за АФЕЛЬ убивали нахрен", msg.getMessageId(), msg.getChat().getId());
                     return true;
                 }
                 return false;
             }
         });
+
+        // Кукла
+        rules.add(new Rule() {
+
+            @Override
+            public boolean check(String txt, Message msg) throws IOException {
+                if (txt.matches("(^|\\s)кукла(\\s|$)")) {
+                            sendMessage("не нужна", msg.getMessageId(), msg.getChat().getId());
+                            return true;
+                        }
+                        return false;
+                    }
+                });
     }
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner l = new Scanner(new File("last_update_id.txt"));
 
-
+        makeRules();
         if (l.hasNextInt()) {
-            lastUpdateId = l.nextInt();
+       //     lastUpdateId = l.nextInt();
         }
         l.close();
         while (true) {
@@ -130,12 +136,10 @@ public class Main {
                     PrintWriter o = new PrintWriter("last_update_id.txt");
                     o.println(lastUpdateId);
                     o.close();
-
                     Message msg = up.getMessage();
-                    if (msg.getChat().getType().equals("private")) {
-                        String txt = msg.getText().toLowerCase();
-                        shouldComeTo319(txt, msg);
-                        aifel(txt, msg);
+                    String txt = msg.getText().toLowerCase();
+                    for (Rule rule : rules) {
+                       Boolean x = rule.check(txt, msg);
                     }
                 }
             } catch (Exception e) {
