@@ -1,7 +1,18 @@
 package com.company.Services;
 
 import jdk.nashorn.api.scripting.JSObject;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.json.JSONObject;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 
 /**
  * Created by Lua_b on 01.11.2015.
@@ -88,6 +99,7 @@ public class Message {
      * @return parsed message
      */
     public static Message getMessage(JSONObject message){
+        System.out.print(message);
         Integer message_id = message.getInt("message_id");
         Integer date = message.getInt("date");
         User from = User.getUserSender(message.getJSONObject("from"));
@@ -101,4 +113,96 @@ public class Message {
         }
     }
 
+    public static Message getMessageFromResult(JSONObject result){
+        return getMessage(result.getJSONObject("result"));
+    }
+    /**
+     * @param text
+     * @param replyTo may be <code>null</code>
+     * @param chatId
+     */
+   public static Message sendMessage(String text, Integer replyTo, int chatId) throws IOException {
+        String s = "https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendMessage?";
+        QueryString q = new QueryString();
+        // chat_id=47289384&text=Test&reply_to_message_id=52
+        q.add("chat_id", String.valueOf(chatId));
+        q.add("text", text);
+        if (replyTo != null) {
+            q.add("reply_to_message_id", replyTo.toString());
+        }
+        URL url = new URL(s + q.getQuery());
+        java.util.Scanner scanner = null;
+        try {
+            scanner = new java.util.Scanner(url.openStream()).useDelimiter("\\A");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.err.println(url);
+       String response = "";
+       while(scanner.hasNext()){
+           response+=scanner.next();
+       }
+       System.out.print(response);
+        return getMessageFromResult(new JSONObject(response));
+    }
+    /**
+     * Sends a photo
+     * @param photo photo to send (file)
+     * @param chatId ID of chat to reply
+     * @return send message
+     */
+    public static Message sendPhoto(File photo,int chatId){
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendPhoto");
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addTextBody("chat_id", "chatId", ContentType.TEXT_PLAIN);
+        builder.addBinaryBody("photo", photo, ContentType.APPLICATION_OCTET_STREAM, photo.getName());
+        HttpEntity multipart = builder.build();
+        uploadFile.setEntity(multipart);
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(uploadFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        HttpEntity responseEntity = response.getEntity();
+
+        java.util.Scanner s = null;
+        try {
+            s = new java.util.Scanner(responseEntity.getContent()).useDelimiter("\\A");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
+    }
+    /**
+     * Sends a photo
+     * @param photo photo to send (filepath)
+     * @param chatId ID of chat to reply
+     * @return send message
+     */
+    public static Message sendPhoto(String photo,Integer chatId){
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendPhoto");
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addTextBody("chat_id", String.valueOf(chatId), ContentType.TEXT_PLAIN);
+        builder.addBinaryBody("photo", new File(photo), ContentType.APPLICATION_OCTET_STREAM, photo);
+        HttpEntity multipart = builder.build();
+        uploadFile.setEntity(multipart);
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(uploadFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        HttpEntity responseEntity = response.getEntity();
+
+        java.util.Scanner s = null;
+        try {
+            s = new java.util.Scanner(responseEntity.getContent()).useDelimiter("\\A");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
+    }
 }

@@ -30,24 +30,7 @@ public class Main {
         return new URL(s);
     }
 
-    /**
-     * @param text
-     * @param replyTo may be <code>null</code>
-     * @param chatId
-     */
-    static void sendMessage(String text, Integer replyTo, int chatId) throws IOException {
-        String s = "https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendMessage?";
-        QueryString q = new QueryString();
-        // chat_id=47289384&text=Test&reply_to_message_id=52
-        q.add("chat_id", String.valueOf(chatId));
-        q.add("text", text);
-        if (replyTo != null) {
-            q.add("reply_to_message_id", replyTo.toString());
-        }
-        URL url = new URL(s + q.getQuery());
-        url.openStream();
-        System.err.println(url);
-    }
+
 
 
     static int lastUpdateId = 0;
@@ -64,7 +47,7 @@ public class Main {
             public boolean check(String txt, Message msg) throws IOException {
                 for (String w : dict) {
                     if (txt.contains(w)) {
-                        sendMessage(makeText(msg), msg.getMessageId(), msg.getChat().getId());
+                        Message.sendMessage(makeText(msg), msg.getMessageId(), msg.getChat().getId());
                         return true;
                     }
                 }
@@ -87,7 +70,7 @@ public class Main {
             @Override
             public boolean check(String txt, Message msg) throws IOException {
                 if (txt.contains("айфель") || txt.contains("афель")) {
-                    sendMessage("у меня в Иннаполисе за АФЕЛЬ убивали нахрен", msg.getMessageId(), msg.getChat().getId());
+                    Message.sendMessage("у меня в Иннаполисе за АФЕЛЬ убивали нахрен", msg.getMessageId(), msg.getChat().getId());
                     return true;
                 }
                 return false;
@@ -100,7 +83,7 @@ public class Main {
             @Override
             public boolean check(String txt, Message msg) throws IOException {
                 if (txt.matches("(^|\\s)кукла(\\s|$)")) {
-                            sendMessage("не нужна", msg.getMessageId(), msg.getChat().getId());
+                    Message.sendMessage("не нужна", msg.getMessageId(), msg.getChat().getId());
                             return true;
                         }
                         return false;
