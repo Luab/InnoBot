@@ -19,7 +19,7 @@ import java.io.StringWriter;
  */
 public class Tes {
   public static void main(String[] args){
-        System.out.print(Message.sendPhoto("1.jpg",-43487263));
+        System.out.print(Message.sendPhoto("1.gif",-43487263));
 
   }
 }
