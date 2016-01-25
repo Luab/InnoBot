@@ -1,6 +1,7 @@
 package com.company.Services;
 
 import jdk.nashorn.api.scripting.JSObject;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -145,18 +146,20 @@ public class Message {
        System.out.print(response);
         return getMessageFromResult(new JSONObject(response));
     }
+
     /**
-     * Sends a photo
-     * @param photo photo to send (file)
-     * @param chatId ID of chat to reply
-     * @return send message
+     * Utill function used to send everything
+     * @param what type (should corresspond with Telegram API) ex photo
+     * @param chatId chat to send to
+     * @param file file to send
+     * @return
      */
-    public static Message sendPhoto(File photo,int chatId){
+    private static Message sender(String what, int chatId,File file){
         CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendPhoto");
+        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/send"+what);
         MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addTextBody("chat_id", "chatId", ContentType.TEXT_PLAIN);
-        builder.addBinaryBody("photo", photo, ContentType.APPLICATION_OCTET_STREAM, photo.getName());
+        builder.addTextBody("chat_id", String.valueOf(chatId), ContentType.TEXT_PLAIN);
+        builder.addBinaryBody(what, file, ContentType.APPLICATION_OCTET_STREAM, file.getName());
         HttpEntity multipart = builder.build();
         uploadFile.setEntity(multipart);
         CloseableHttpResponse response = null;
@@ -174,6 +177,46 @@ public class Message {
             e.printStackTrace();
         }
         return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
+    }
+    /**
+     * Utill function used to send everything
+     * @param what type (should corresspond with Telegram API) ex photo
+     * @param chatId chat to send to
+     * @param file file to send
+     * @return
+     */
+    private static Message sender(String what, int chatId,byte[] file){
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/send"+what);
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.addTextBody("chat_id", String.valueOf(chatId), ContentType.TEXT_PLAIN);
+        builder.addBinaryBody(what, file, ContentType.APPLICATION_OCTET_STREAM, "new");
+        HttpEntity multipart = builder.build();
+        uploadFile.setEntity(multipart);
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(uploadFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        HttpEntity responseEntity = response.getEntity();
+
+        java.util.Scanner s = null;
+        try {
+            s = new java.util.Scanner(responseEntity.getContent()).useDelimiter("\\A");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
+    }
+    /**
+     * Sends a photo
+     * @param photo photo to send (file)
+     * @param chatId ID of chat to reply
+     * @return send message
+     */
+    public static Message sendPhoto(File photo,int chatId){
+        return sender("photo",chatId,photo);
     }
     /**
      * Sends a photo
@@ -182,29 +225,10 @@ public class Message {
      * @return send message
      */
     public static Message sendPhoto(byte[] photo,Integer chatId){
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendPhoto");
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addTextBody("chat_id", String.valueOf(chatId), ContentType.TEXT_PLAIN);
-        builder.addBinaryBody("photo", photo);
-        HttpEntity multipart = builder.build();
-        uploadFile.setEntity(multipart);
-        CloseableHttpResponse response = null;
-        try {
-            response = httpClient.execute(uploadFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        HttpEntity responseEntity = response.getEntity();
+        return sender("photo",chatId, photo);
 
-        java.util.Scanner s = null;
-        try {
-            s = new java.util.Scanner(responseEntity.getContent()).useDelimiter("\\A");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
     }
+
     /**
      * Sends a photo
      * @param photo photo to send (filepath)
@@ -212,58 +236,16 @@ public class Message {
      * @return send message
      */
     public static Message sendPhoto(String photo,Integer chatId){
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendPhoto");
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addTextBody("chat_id", String.valueOf(chatId), ContentType.TEXT_PLAIN);
-        builder.addBinaryBody("photo", new File(photo), ContentType.APPLICATION_OCTET_STREAM, photo);
-        HttpEntity multipart = builder.build();
-        uploadFile.setEntity(multipart);
-        CloseableHttpResponse response = null;
-        try {
-            response = httpClient.execute(uploadFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        HttpEntity responseEntity = response.getEntity();
-
-        java.util.Scanner s = null;
-        try {
-            s = new java.util.Scanner(responseEntity.getContent()).useDelimiter("\\A");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
+        return sender("photo",chatId,new File(photo));
     }
 
     /**
      * Sends a Document
-     * @param Document photo to send (filepath)
+     * @param document photo to send (filepath)
      * @param chatId ID of chat to reply
      * @return send message
      */
-    public static Message sendDocument(String Document,Integer chatId){
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost uploadFile = new HttpPost("https://api.telegram.org/bot"+ BuildVars.BOT_TOKEN+"/sendDocument");
-        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
-        builder.addTextBody("chat_id", String.valueOf(chatId), ContentType.TEXT_PLAIN);
-        builder.addBinaryBody("document", new File(Document), ContentType.APPLICATION_OCTET_STREAM, Document);
-        HttpEntity multipart = builder.build();
-        uploadFile.setEntity(multipart);
-        CloseableHttpResponse response = null;
-        try {
-            response = httpClient.execute(uploadFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        HttpEntity responseEntity = response.getEntity();
-
-        java.util.Scanner s = null;
-        try {
-            s = new java.util.Scanner(responseEntity.getContent()).useDelimiter("\\A");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return getMessageFromResult(new JSONObject(s.hasNext() ? s.next() : ""));
+    public static Message sendDocument(String document,Integer chatId){
+        return sender("document",chatId,new File(document));
     }
 }
